@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<executable>
+  <category>Filtering</category>
+  <title>DTIPhantom</title>
+  <description>
+   This module creates DTI phantom images
+  </description>
+  <version>1</version>
+  <documentation-url></documentation-url>
+  <license></license>
+  <contributor>Francois Budin</contributor>
+<acknowledgements>
+</acknowledgements>
+  <parameters>
+    <label>Input/Output</label>
+    <description>Input/output parameters</description>
+    <image type="any">
+      <name>referenceVolume</name>
+      <label>reference Volume</label>
+      <channel>input</channel>
+      <flag>R</flag>
+      <longflag>Reference</longflag>
+      <description>Reference Image</description>
+    </image>
+    <image type="tensor">
+      <name>outputVolume</name>
+      <label>Output Volume</label>
+      <channel>output</channel>
+      <flag>o</flag>
+      <longflag>output</longflag>
+      <description>Output Image</description>
+    </image>
+    <double-vector>
+      <name>outputImageSize</name>
+      <flag>-s</flag>
+      <longflag>--size</longflag>
+      <description>Size along each dimension</description>
+      <label>Size</label>
+      <default>50,50,50</default>
+    </double-vector>
+    <string-enumeration>
+      <name>shape</name>
+      <longflag>--shape</longflag>
+      <description>Phantom shape</description>
+      <label>Phantom shape</label>
+      <element>tube</element>
+      <element>sphere</element>
+      <default>tube</default>
+    </string-enumeration>
+    <double>
+      <name>shapeSize</name>
+      <longflag>--shapeSize</longflag>
+      <description>Shape size - Ratio with image size. Has to be between 0 and 1</description>
+      <label>Shape size</label>
+      <default>.5</default>
+    </double>
+  </parameters>
+</executable>
+
