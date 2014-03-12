@@ -3,6 +3,7 @@
 #include <itkImageFileReader.h>
 #include <itkImageFileWriter.h>
 #include <itkDiffusionTensor3D.h>
+#include <random>
 
 typedef itk::Image< itk::DiffusionTensor3D< float > , 3 > ImageType ;
 
@@ -31,39 +32,9 @@ void CreateGrid( std::string referenceVolume ,
     image->Allocate() ;
   }
 }
-/*
-int Create( std::string name )
-{
-  itk::DiffusionTensor3D< float > tensor ;
-  tensor.Fill( 0.0 ) ;
-  tensor(0,0) = 1.2e-7 ;
-  tensor(1,1) = 1.0e-7 ;
-  tensor(2,2) = 1.1e-7 ;
-  image->FillBuffer( tensor ) ;
-  
-  tensor(0,0) = 1.0e-4 ;
-  tensor(1,1) = 10.0e-4 ;
-  tensor(2,2) = 1.0e-4 ;
-  ImageType::IndexType index ;
-  index[ 2 ] = 5 ;
-  for( int i = 0 ; i < 20 ; i++ )
-  {
-     if( (i+1)%7 == 0 )
-     {
-        i+=6 ;
-     }
-     index[ 0 ] = i ;
-     for( int j = 0 ; j < 20 ; j++ )
-     {
-        index[ 1 ] = j ;
-        image->SetPixel( index , tensor ) ;
-     }
-  }
 
-  return 0 ;
-}*/
 
-void tube( ImageType::Pointer &image , double shapeSize )
+void tube( ImageType::Pointer &image , double shapeSize , double  std_noise )
 {
   typedef itk::ContinuousIndex< double , 3 > ContinuousIndex ;
   ImageType::SizeType size = image->GetLargestPossibleRegion().GetSize() ;
@@ -78,10 +49,6 @@ void tube( ImageType::Pointer &image , double shapeSize )
   itk::DiffusionTensor3D< float > zeroTensor ;
   zeroTensor.Fill( 0.0 ) ;
   itk::DiffusionTensor3D< float > tensor ;
-  tensor.Fill( 0.0 ) ;
-  tensor(0,0) = 1.0e-6 ;
-  tensor(1,1) = 1.1e-6 ;
-  tensor(2,2) = 9e-6 ;
   double radius = 0 ;
   int position ;
   position = (size[ 0 ] < size[ 1 ] ? 0 : 1 ) ;
@@ -91,6 +58,12 @@ void tube( ImageType::Pointer &image , double shapeSize )
   radius = radius * radius ;
   ImageType::IndexType index ;
   ImageType::PointType point ;
+  std::default_random_engine generator;
+  std_noise = std_noise * 1e-6 ;
+  std::normal_distribution<double> distribution_eigen1( 9e-6 , std_noise ) ;
+  std::normal_distribution<double> distribution_eigen2( 1e-6 , std_noise ) ;
+  std::normal_distribution<double> distribution_eigen3( 1e-6 , std_noise ) ;
+  std::normal_distribution<double> distribution_rest( 0 , std_noise ) ;
   for( index[ 2 ] = 0 ; index[ 2 ] < size[ 2 ] ; index[ 2 ]++ )
   {
     for( index[ 0 ] = 0 ; index[ 0 ] < size[ 0 ] ; index[ 0 ]++ )
@@ -106,6 +79,13 @@ void tube( ImageType::Pointer &image , double shapeSize )
         }
         if( distance < radius )
         {
+          for( int i = 0 ; i < 6 ; i++ )
+          {
+            tensor.Fill( distribution_rest( generator ) ) ;
+          }
+          tensor(0,0) = distribution_eigen2( generator ) ;
+          tensor(1,1) = distribution_eigen3( generator ) ;
+          tensor(2,2) = distribution_eigen1( generator ) ;
           image->SetPixel( index , tensor ) ;
         }
         else
@@ -134,12 +114,12 @@ int main( int argc , char* argv[] )
   {
     std::cout << "The name of the output volume has to be specified" << std::endl ;
     return EXIT_FAILURE ;
-  } 
+  }
   ImageType::Pointer image = ImageType::New() ;
   CreateGrid( referenceVolume , outputImageSize , image ) ;
   if( shape == "tube" )
   {
-    tube( image , shapeSize) ;
+    tube( image , shapeSize , std_noise ) ;
   }
   typedef itk::ImageFileWriter< ImageType > WriterType ;
   WriterType::Pointer writer = WriterType::New() ;
